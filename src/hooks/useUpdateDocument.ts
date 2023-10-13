@@ -1,40 +1,53 @@
-import { useMutation } from "@tanstack/react-query";
-import { FirebaseError } from "firebase/app";
-import { serverTimestamp } from "firebase/firestore";
+import { UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { FieldValue } from "firebase/firestore";
 import { updateDocumentAPI } from "../api/firestore";
-import useAuth from "../context/authentication/useAuth";
+import { FirebaseError } from "firebase/app";
 
 interface UseUpdateDocumentProps {
   collectionName: string;
-  documentId: string | undefined;
-  successCallback: () => void;
+  documentId: string;
+  options?: UseMutationOptions<
+    void,
+    FirebaseError,
+    {
+      [key: string]: FieldValue | Partial<unknown> | undefined;
+    }
+  >;
 }
 
-const useUpdateDocument = <T>({
+const useUpdateDocument = ({
   collectionName,
   documentId,
-  successCallback,
+  options = {},
 }: UseUpdateDocumentProps) => {
-  const { user } = useAuth();
+  const {
+    onSuccess: successCallback,
+    onError: errorCallback,
+    onMutate: mutateCallback,
+    ...restOfOptions
+  } = options;
 
   return useMutation({
-    mutationFn: (data: T) => {
+    mutationFn: (data: {
+      [key: string]: FieldValue | Partial<unknown> | undefined;
+    }) => {
       return updateDocumentAPI({
         collectionName,
-        documentId: documentId || "",
-        data: {
-          ...data,
-          updatedDate: serverTimestamp(),
-          updatedBy: user?.phoneNumber,
-        },
+        documentId,
+        data,
       });
     },
     mutationKey: ["updateDocument", collectionName],
-    onSuccess: () => {
-      successCallback();
+    onSuccess: (data, variables, context) => {
+      successCallback?.(data, variables, context);
     },
-    onError: (err: FirebaseError) => {},
-    onMutate: () => {},
+    onError: (error, variables, context) => {
+      errorCallback?.(error, variables, context);
+    },
+    onMutate: (variables) => {
+      mutateCallback?.(variables);
+    },
+    ...restOfOptions,
   });
 };
 

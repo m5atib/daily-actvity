@@ -1,38 +1,41 @@
-import { useMutation } from "@tanstack/react-query";
-import { FirebaseError } from "firebase/app";
-import { serverTimestamp } from "firebase/firestore";
+import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { createDocumentAPI } from "../api/firestore";
+import { FirebaseError } from "firebase/app";
 import { CreatedDocument } from "./types";
-import useAuth from "../context/authentication/useAuth";
 
-interface UseCreateDocumentProps {
+interface UseCreateDocumentProps<T> {
   collectionName: string;
-  successCallback: (response: CreatedDocument) => void;
+  options?: UseMutationOptions<CreatedDocument, FirebaseError, Partial<T>>;
 }
 
 const useCreateDocument = <T>({
   collectionName,
-  successCallback,
-}: UseCreateDocumentProps) => {
-  const { user } = useAuth();
-
+  options = {},
+}: UseCreateDocumentProps<T>) => {
+  const {
+    onSuccess: successCallback,
+    onError: errorCallback,
+    onMutate: mutateCallback,
+    ...restOfOptions
+  } = options;
   return useMutation({
     mutationFn: (data: Partial<T>) => {
       return createDocumentAPI({
         collectionName,
-        data: {
-          ...data,
-          createdDate: serverTimestamp(),
-          createdBy: user?.uid,
-        },
+        data,
       });
     },
     mutationKey: ["createDocument", collectionName],
-    onSuccess: (response: CreatedDocument) => {
-      successCallback(response);
+    onSuccess: (data, variables, context) => {
+      successCallback?.(data, variables, context);
     },
-    onError: (err: FirebaseError) => {},
-    onMutate: () => {},
+    onError: (error, variables, context) => {
+      errorCallback?.(error, variables, context);
+    },
+    onMutate: (variables) => {
+      mutateCallback?.(variables);
+    },
+    ...restOfOptions,
   });
 };
 

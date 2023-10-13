@@ -1,30 +1,36 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { deleteDocumentAPI } from "../api/firestore";
 import { FirebaseError } from "firebase/app";
 
 interface UseDeleteDocumentProps {
-  successCallback?: () => void;
+  options?: UseMutationOptions<void, FirebaseError, { documentId: string }>;
   collectionName: string;
 }
 export const useDeleteDocument = ({
   collectionName,
-  successCallback,
+  options = {},
 }: UseDeleteDocumentProps) => {
-  const queryClient = useQueryClient();
+  const {
+    onSuccess: successCallback,
+    onError: errorCallback,
+    onMutate: mutateCallback,
+    ...restOfOptions
+  } = options;
 
   return useMutation({
-    mutationKey: ["createDocument", collectionName],
+    mutationKey: ["deleteDocument", collectionName],
     mutationFn: ({ documentId }: { documentId: string }) =>
       deleteDocumentAPI({ collectionName, documentId }),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries(["getProductsCollection"]);
-
-      successCallback?.();
+    onSuccess: (data, variables, context) => {
+      successCallback?.(data, variables, context);
     },
-
-    onError: (err: FirebaseError) => {},
-
-    onMutate: () => {},
+    onError: (error, variables, context) => {
+      errorCallback?.(error, variables, context);
+    },
+    onMutate: (variables) => {
+      mutateCallback?.(variables);
+    },
+    ...restOfOptions,
   });
 };
