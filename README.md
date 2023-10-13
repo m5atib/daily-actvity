@@ -9,9 +9,13 @@ What to do:
 3- CRUD Hooks --Done
 
 4- Add the routes
+
 |- Home
 |- Login
+
 5- Install Mantine lib
+
 6- Add the layouts
+
 |- Root Layout
 |- Auth Layout
