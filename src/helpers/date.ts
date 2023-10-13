@@ -1,24 +1,36 @@
-export const isWeekend = (data: Date) => [0, 6].indexOf(data.getDay()) !== -1;
+export const isWeekend = (date: Date): boolean => {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+};
 
-const secondsInOneDay = 60 * 60 * 24;
-const millisecondsInOneDay = secondsInOneDay * 1000;
-export const daysDiff = (firstDate: Date, secondDate: Date) =>
-  Math.ceil(
-    Math.abs(firstDate.getMilliseconds() - secondDate.getMilliseconds()) /
-      millisecondsInOneDay
-  );
+const MILLISECONDS_IN_ONE_DAY = 86400000;
 
-export const daysOfYear = (date: Date) =>
-  Math.floor(
-    date.getMilliseconds() -
-      new Date(date.getFullYear(), 0, 0).getMilliseconds()
-  );
+export const daysDiff = (firstDate: Date, secondDate: Date): number => {
+  const millisecondsDiff = Math.abs(firstDate.getTime() - secondDate.getTime());
+  return Math.ceil(millisecondsDiff / MILLISECONDS_IN_ONE_DAY);
+};
 
-export const getTime = () => new Date().toLocaleTimeString();
+export const daysOfYear = (date: Date): number => {
+  const startOfYear = new Date(date.getFullYear(), 0, 0);
+  const millisecondsDiff = date.getTime() - startOfYear.getTime();
+  return Math.floor(millisecondsDiff / MILLISECONDS_IN_ONE_DAY);
+};
 
-export const getCurrentTimeDate = () => new Date().toString();
+export const getTime = (): string => {
+  const now = new Date();
+  return now.toLocaleTimeString();
+};
 
-export const currentTimeInTimezone = (timezone: string) =>
-  new Date().toLocaleTimeString("en-US", { timeZone: timezone });
+export const getCurrentTimeDate = (): string => {
+  const now = new Date();
+  return now.toString();
+};
 
-export const getTimeFromDate = (date: Date) => date.toTimeString().slice(0, 8);
+export const currentTimeInTimezone = (timezone: string): string => {
+  const now = new Date();
+  return now.toLocaleTimeString("en-US", { timeZone: timezone });
+};
+
+export const getTimeFromDate = (date: Date): string => {
+  return date.toTimeString().slice(0, 8);
+};
